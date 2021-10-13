@@ -1,0 +1,68 @@
+
+
+#############################
+#Sample out put:
+#############################
+
+[PASSED] Transparent hugepages setting is set correctly.
+[ERROR]  Readahead setting for data mount is not set correctly. Check FAILED!.
+[PASSED] ulimit -f (file size) is set correctly.
+[PASSED] ulimit -t (cpu time) is set correctly.
+[PASSED] ulimit -v (virtual memory) is set correctly.
+[ERROR]  ulimit -l (locked-in-memory size) is not set correctly. Need to be unlimited.
+[PASSED] ulimit -m (memory size) is set correctly.
+[ERROR]  ulimit -n (open files) is not set correctly. Need to be no less than 64000.
+[PASSED] ulimit -u (processes/threads) is set correctly.
+[PASSED] noatime for the dbPath mount point is set correctly.
+[PASSED] fs.file-max is set correctly.
+[PASSED] kernel.pid_max is set correctly.
+[PASSED] kernel.threads-max is set correctly.
+[ERROR]  vm.max_map_count is not set correctly. Need to be no less than 128000.
+[ERROR]  swappiness is not set correctly. Need to be 0.
+[ERROR]  TCP keepalive time is not set correctly. Need to be 300.
+
+
+
+
+
+#############################
+#for THP:
+#############################
+follow mongo document
+
+#############################
+#For read ahead, use RHEL document below:
+#############################
+/etc/udev/rules.d/99-readahead.rules
+ACTION!="add|change", GOTO="ra_end"
+KERNEL=="dm-*", SUBSYSTEM=="block", ENV{DM_VG_NAME}=="vg_os", ENV{DM_LV_NAME}=="mongodb",
+RUN+="/sbin/blockdev --setra 32 /dev/nvme2n1p1"
+LABEL="ra_end"
+
+
+#############################
+#ulimit for user
+#############################
+modify  /etc/security/limits.conf
+example:
+mongodb         soft     nofile         64000
+mongodb         hard     nofile         64000
+mongodb         soft     nproc          64000
+mongodb         hard     nproc          64000
+mongodb         soft     memlock        unlimited
+mongodb         hard     memlock        unlimited
+
+#############################
+#Kernel parameters
+#############################
+Add below to the end of the file /etc/sysctl.conf and save.
+kernel.pid_max=64000
+fs.file-max=98000
+kernel.threads-max=64000
+vm.max_map_count=128000
+vm.swappiness=0
+net.ipv4.tcp_keepalive_time=300
+
+to reload
+sysctl -p
+
